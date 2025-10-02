@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { ChatInterface } from './components/ChatInterface'
+import { AdvancedChatInterface } from './components/AdvancedChatInterface'
 import { SuroohAvatar } from './components/SuroohAvatar'
 import { SystemStatus } from './components/SystemStatus'
 
