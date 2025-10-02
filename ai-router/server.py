@@ -48,16 +48,37 @@ memory_store = {
     "results": []
 }
 
+# Initialize Advanced Brain
+advanced_brain = AdvancedBrain()
+print("🧠 Advanced Multi-Layer Brain initialized successfully")
+
 # Pydantic models
 class ChatRequest(BaseModel):
     message: str
     user_id: str = "abo_sham"
     session_id: Optional[str] = None
 
+class AdvancedChatRequest(BaseModel):
+    message: str
+    user_id: str = "abo_sham"
+    session_id: Optional[str] = None
+    chat_mode: str = "smart"
+    attached_files: List[Dict] = []
+    context: List[Dict] = []
+
 class ChatResponse(BaseModel):
     response: str
     flow_trace: List[str] = []
     requestId: Optional[str] = None
+
+class AdvancedChatResponse(BaseModel):
+    response: str
+    brain_layers: List[Dict] = []
+    learning_insights: List[str] = []
+    confidence_score: int = 85
+    knowledge_gained: int = 0
+    processing_time: float = 0.0
+    response_type: str = "advanced_ai"
 
 class SystemStatus(BaseModel):
     status: str
@@ -69,6 +90,7 @@ class SystemStatus(BaseModel):
     storage: str
     timestamp: str
     version: str
+    brain_layers: Optional[Dict] = None
 
 # Surooh AI System Classes
 class SuroohSecretary:
