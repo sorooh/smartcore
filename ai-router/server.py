@@ -1,4 +1,4 @@
-# External AI Router - Python Backend for Surooh AI System
+# Advanced Surooh AI Router - Multi-Layer Brain System
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -14,18 +14,19 @@ import json
 load_dotenv('../backend/.env')
 load_dotenv('.env')
 
-# Import emergentintegrations
+# Import emergentintegrations and advanced brain
 try:
     from emergentintegrations.llm.chat import LlmChat, UserMessage
-    print("✅ emergentintegrations imported successfully")
+    from advanced_brain import AdvancedBrain
+    print("✅ emergentintegrations and AdvancedBrain imported successfully")
 except ImportError as e:
-    print(f"❌ Failed to import emergentintegrations: {e}")
+    print(f"❌ Failed to import dependencies: {e}")
     sys.exit(1)
 
 app = FastAPI(
-    title="Surooh AI Router", 
-    description="External AI Router for Surooh System",
-    version="1.0.0"
+    title="Advanced Surooh AI Router", 
+    description="Multi-Layer Brain System for Surooh AI",
+    version="2.0.0"
 )
 
 app.add_middleware(
