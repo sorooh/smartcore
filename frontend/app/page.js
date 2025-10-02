@@ -98,27 +98,35 @@ export default function Home() {
           ) : (
             <>
               {/* Welcome Message */}
-              <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 mb-6 border border-blue-100">
+              <div className="bg-gradient-to-r from-blue-50 to-purple-50 backdrop-blur-sm rounded-2xl p-6 mb-6 border border-blue-200 shadow-lg">
                 <div className="flex items-start space-x-4 rtl:space-x-reverse">
-                  <SuroohAvatar size="md" />
+                  <SuroohAvatar size="md" animated={true} />
                   <div className="flex-1">
-                    <h3 className="font-bold text-blue-900 mb-2">مرحباً أبو شام! 🌸</h3>
+                    <h3 className="font-bold text-blue-900 mb-2 text-xl">مرحباً أبو شام! 🌸</h3>
                     <p className="text-blue-800 leading-relaxed">
-                      أنا سُروح، شريكتك الذكية. جاهزة لمساعدتك في إدارة أعمالك ومشاريعك. 
-                      يمكنني البرمجة، التصميم، إدارة المهام، والكثير أكثر. شو بدك نشتغل عليه اليوم؟
+                      أنا سُروح المتطورة، مع المخ الجديد متعدد الطبقات! الآن يمكنني التعلم والتطور المستمر. 
+                      عندي 7 طبقات ذكية تشتغل متزامنة: الإدراك، التحليل، المنطق، الإبداع، التعلم، الذاكرة، والتركيب.
                     </p>
-                    <div className="flex flex-wrap gap-2 mt-4">
-                      <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">💻 البرمجة</span>
-                      <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">🎨 التصميم</span>
-                      <span className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm">📊 إدارة المشاريع</span>
-                      <span className="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm">🧠 تحليل البيانات</span>
+                    <div className="grid grid-cols-4 gap-2 mt-4">
+                      <span className="bg-blue-100 text-blue-800 px-3 py-2 rounded-lg text-sm flex items-center">
+                        <span className="mr-2">🧠</span> تفكير متقدم
+                      </span>
+                      <span className="bg-green-100 text-green-800 px-3 py-2 rounded-lg text-sm flex items-center">
+                        <span className="mr-2">🎓</span> تعلم ذاتي
+                      </span>
+                      <span className="bg-purple-100 text-purple-800 px-3 py-2 rounded-lg text-sm flex items-center">
+                        <span className="mr-2">📚</span> ذاكرة طويلة
+                      </span>
+                      <span className="bg-orange-100 text-orange-800 px-3 py-2 rounded-lg text-sm flex items-center">
+                        <span className="mr-2">⚡</span> معالجة فورية
+                      </span>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Chat Interface */}
-              <ChatInterface />
+              {/* Advanced Chat Interface */}
+              <AdvancedChatInterface />
             </>
           )}
         </div>
