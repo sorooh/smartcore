@@ -381,13 +381,23 @@ async def chat_endpoint(chat_request: ChatRequest):
                 detail="شو بدك يا أبو شام؟ ما وصلني شي!"
             )
         
-        secretary = SuroohSecretary()
-        result = await secretary.process_request(
-            chat_request.message, 
-            chat_request.user_id
+        # Use advanced brain for backward compatibility
+        advanced_request = AdvancedChatRequest(
+            message=chat_request.message,
+            user_id=chat_request.user_id,
+            session_id=chat_request.session_id,
+            chat_mode="smart",
+            attached_files=[],
+            context=[]
         )
         
-        return ChatResponse(**result)
+        advanced_result = await advanced_chat_endpoint(advanced_request)
+        
+        return ChatResponse(
+            response=advanced_result.response,
+            flow_trace=["secretary", "advanced_brain", "synthesis"],
+            requestId=chat_request.session_id
+        )
         
     except Exception as error:
         logger.error(f'خطأ في المحادثة: {error}')
