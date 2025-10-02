@@ -337,7 +337,40 @@ class FullStackProBot:
             "message": "تم بناء الحل المتكامل بنجاح! 🏗️"
         }
 
-# API Routes
+# Advanced API Routes
+@app.post("/advanced-chat", response_model=AdvancedChatResponse)
+async def advanced_chat_endpoint(chat_request: AdvancedChatRequest):
+    """
+    Advanced chat with multi-layer brain processing
+    """
+    try:
+        if not chat_request.message or not chat_request.message.strip():
+            raise HTTPException(
+                status_code=400, 
+                detail="شو بدك يا أبو شام؟ ما وصلني شي!"
+            )
+        
+        logger.info(f'🧠 Advanced Brain: processing request from {chat_request.user_id}')
+        
+        # Process through advanced multi-layer brain
+        result = await advanced_brain.process_advanced_request(
+            message=chat_request.message,
+            user_id=chat_request.user_id,
+            context=chat_request.context,
+            chat_mode=chat_request.chat_mode,
+            attached_files=chat_request.attached_files
+        )
+        
+        return AdvancedChatResponse(**result)
+        
+    except Exception as error:
+        logger.error(f'خطأ في المخ المتطور: {error}')
+        raise HTTPException(
+            status_code=500,
+            detail=f"عذراً أبو شام، حدث خطأ في المخ المتطور: {str(error)}"
+        )
+
+# Original chat for compatibility  
 @app.post("/chat", response_model=ChatResponse)
 async def chat_endpoint(chat_request: ChatRequest):
     """Main chat endpoint for Surooh AI"""
