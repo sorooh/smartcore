@@ -1,13 +1,32 @@
-// External AI Router - Node.js Backend for Surooh AI System
-const express = require('express');
-const cors = require('cors');
-const dotenv = require('dotenv');
+# External AI Router - Python Backend for Surooh AI System
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from dotenv import load_dotenv
+import os
+import sys
+import logging
+from datetime import datetime
+from typing import Optional, List, Dict, Any
+import json
 
-// Load environment variables from backend/.env
-dotenv.config({ path: '../backend/.env' });
+# Load environment variables
+load_dotenv('../backend/.env')
+load_dotenv('.env')
 
-const { LlmChat, UserMessage } = require('emergentintegrations/llm/chat');
-const admin = require('firebase-admin');
+# Import emergentintegrations
+try:
+    from emergentintegrations.llm.chat import LlmChat, UserMessage
+    print("✅ emergentintegrations imported successfully")
+except ImportError as e:
+    print(f"❌ Failed to import emergentintegrations: {e}")
+    sys.exit(1)
+
+app = FastAPI(
+    title="Surooh AI Router", 
+    description="External AI Router for Surooh System",
+    version="1.0.0"
+)
 
 const app = express();
 app.use(cors());
