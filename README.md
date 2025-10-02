@@ -29,3 +29,49 @@ It receives requests from **Brain**, classifies them, distributes to specialized
 ---
 
 ## 📂 Structure
+
+/apps
+/web → Next.js frontend (Dashboard, Secretary)
+/services
+/external-ai → Node.js service for AI routing & memory
+/docs → Architecture & planning
+
+
+---
+
+## 📋 Roadmap (Phase 1 → MVP)
+- [ ] Setup Next.js project with Firebase Auth
+- [ ] Build Secretary interface (Chat UI)
+- [ ] Implement Brain (basic rule-based logic)
+- [ ] Connect SmartCore → External AI Service
+- [ ] Save and sync all sessions to Firestore
+- [ ] Deploy via GitHub Actions → Vercel (frontend) + Contabo (backend)
+
+---
+
+## 🔑 Ownership
+- All code is owned by **Surooh Holding Group B.V.**
+- Private repository – not open source.
+- Author: **Sam Borvat (Abu Sham)** – Founder & CEO  
+- Vision: *"لا شيء مستحيل – زنبق صخر الصوان"*
+
+---
+
+# 📖 شرح بالعربية
+
+## 🌸 ما هي سُروح؟
+**سُروح** هي الشريكة الذكية – نسخة رقمية من أبو شام – تعمل كمديرة تنفيذية، سكرتيرة، محاسبة، مبرمجة، ومصممة في وقت واحد.  
+
+---
+
+## 🏗️ الطبقات الأساسية
+1. **السكرتيرة (الواجهة):** تستقبل الطلبات من أبو شام  
+2. **المخ (Brain):** يحلل ويتخذ القرارات  
+3. **منسق المهام (SmartCore):** يوزع المهام ويتابع التنفيذ  
+4. **البوتات المتخصصة:** مبرمج، مصمم، مطور متكامل  
+5. **الذاكرة والتعلم:** تخزن البيانات وتتعلم باستمرار  
+
+---
+
+## 🎯 الهدف
+بناء منظومة ذكية متكاملة لإدارة الأعمال، تبدأ بـ MVP (شات بوت لسُروح) ثم تتوسع تدريجياً حتى تصبح منصة متكاملة مرتبطة بالمحاسبة، المشتريات، التصاميم، والتشغيل الذكي.
