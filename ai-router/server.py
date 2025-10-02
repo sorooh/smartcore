@@ -406,11 +406,93 @@ async def chat_endpoint(chat_request: ChatRequest):
             detail=f"عذراً أبو شام، حدث خطأ في النظام: {str(error)}"
         )
 
+@app.get("/brain/status")
+async def brain_status_endpoint():
+    """Get detailed brain layers status"""
+    try:
+        has_llm_key = bool(os.getenv('EMERGENT_LLM_KEY'))
+        
+        brain_layers = {
+            "perception": has_llm_key,
+            "analysis": has_llm_key,
+            "reasoning": has_llm_key,
+            "creativity": has_llm_key,
+            "learning": has_llm_key,
+            "memory": True,  # Memory always works
+            "synthesis": has_llm_key
+        }
+        
+        return {
+            "status": "active" if has_llm_key else "limited",
+            "brain_layers": brain_layers,
+            "knowledge_units": len(advanced_brain.knowledge_base),
+            "learning_insights": len(advanced_brain.learning_history),
+            "conversation_memory": len(advanced_brain.conversation_memory),
+            "patterns_recognized": len(advanced_brain.pattern_recognition),
+            "timestamp": datetime.now().isoformat()
+        }
+        
+    except Exception as error:
+        raise HTTPException(status_code=500, detail=str(error))
+
+@app.get("/learning/insights")
+async def get_learning_insights(limit: int = 20):
+    """Get recent learning insights"""
+    try:
+        recent_insights = advanced_brain.learning_history[-limit:]
+        return {
+            "insights": [
+                {
+                    "content": insight.content,
+                    "category": insight.category,
+                    "importance": insight.importance,
+                    "timestamp": insight.timestamp.isoformat(),
+                    "source": insight.source
+                } for insight in recent_insights
+            ],
+            "total_insights": len(advanced_brain.learning_history),
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as error:
+        raise HTTPException(status_code=500, detail=str(error))
+
+@app.get("/knowledge/base") 
+async def get_knowledge_base():
+    """Get current knowledge base"""
+    try:
+        knowledge_summary = {}
+        for topic, knowledge in advanced_brain.knowledge_base.items():
+            knowledge_summary[topic] = {
+                "facts_count": len(knowledge.facts),
+                "confidence": knowledge.confidence,
+                "last_updated": knowledge.last_updated.isoformat()
+            }
+        
+        return {
+            "knowledge_units": len(advanced_brain.knowledge_base),
+            "topics": list(advanced_brain.knowledge_base.keys()),
+            "knowledge_summary": knowledge_summary,
+            "total_facts": sum(len(k.facts) for k in advanced_brain.knowledge_base.values()),
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as error:
+        raise HTTPException(status_code=500, detail=str(error))
+
 @app.get("/status", response_model=SystemStatus)
 async def status_endpoint():
     """Check system status"""
     try:
         has_llm_key = bool(os.getenv('EMERGENT_LLM_KEY'))
+        
+        brain_layers = {
+            "perception": has_llm_key,
+            "analysis": has_llm_key,
+            "reasoning": has_llm_key,
+            "creativity": has_llm_key,
+            "learning": has_llm_key,
+            "memory": True,
+            "synthesis": has_llm_key
+        }
         
         return SystemStatus(
             status="active",
@@ -421,7 +503,8 @@ async def status_endpoint():
             firebase=False,
             storage="memory",
             timestamp=datetime.now().isoformat(),
-            version="1.0.0"
+            version="2.0.0 - Advanced Brain Edition",
+            brain_layers=brain_layers
         )
         
     except Exception as error:
