@@ -770,16 +770,40 @@ surooh-core/
             const encodedContent = Buffer.from(fileContent, 'utf8').toString('base64')
             const fileName = `surooh-project/${filePath}`
             
+            // فحص إذا الملف موجود أولاً للحصول على SHA
+            let existingSHA = null
+            try {
+              const checkResponse = await fetch(`https://api.github.com/repos/sorooh/smartcore/contents/${fileName}`, {
+                headers: { 'Authorization': `token ${GITHUB_TOKEN}` }
+              })
+              
+              if (checkResponse.ok) {
+                const existingFile = await checkResponse.json()
+                existingSHA = existingFile.sha
+                console.log(`📄 الملف ${fileName} موجود، SHA: ${existingSHA.substring(0, 8)}...`)
+              }
+            } catch (e) {
+              console.log(`📄 الملف ${fileName} جديد`)
+            }
+            
+            // إعداد بيانات الرفع
+            const uploadData = {
+              message: `Auto-Deploy: تحديث ${filePath} - ${new Date().toLocaleString('ar-SA')}`,
+              content: encodedContent
+            }
+            
+            // إضافة SHA إذا كان الملف موجود
+            if (existingSHA) {
+              uploadData.sha = existingSHA
+            }
+            
             const githubResponse = await fetch(`https://api.github.com/repos/sorooh/smartcore/contents/${fileName}`, {
               method: 'PUT',
               headers: {
                 'Authorization': `token ${GITHUB_TOKEN}`,
                 'Content-Type': 'application/json'
               },
-              body: JSON.stringify({
-                message: `Auto-Deploy: ${filePath} - ${new Date().toISOString()}`,
-                content: encodedContent
-              })
+              body: JSON.stringify(uploadData)
             })
             
             const result = await githubResponse.json()
@@ -789,9 +813,10 @@ surooh-core/
                 file: filePath,
                 status: 'success',
                 url: result.content?.html_url,
-                sha: result.commit?.sha
+                sha: result.commit?.sha,
+                updated: existingSHA ? true : false
               })
-              console.log(`✅ رُفع: ${filePath}`)
+              console.log(`✅ ${existingSHA ? 'حُدث' : 'رُفع'}: ${filePath}`)
             } else {
               uploadResults.push({
                 file: filePath,
