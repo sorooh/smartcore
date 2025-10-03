@@ -408,11 +408,25 @@ async function handleRoute(request, { params }) {
           signal: AbortSignal.timeout(3000)
         })
         
-        return handleCORS(NextResponse.json({
-          port: port,
-          status: response.ok ? "active" : "inactive",
-          response_time: "< 3s"
-        }))
+        if (response.ok && port === '8006') {
+          // للمخ المتطور، نعيد البيانات الكاملة
+          const advancedBrainData = await response.json()
+          return handleCORS(NextResponse.json({
+            port: port,
+            status: advancedBrainData.status === 'operational' ? 'active' : 'inactive',
+            response_time: "< 3s",
+            statistics: advancedBrainData.statistics,
+            uptime_human: advancedBrainData.uptime_human,
+            components: advancedBrainData.components,
+            version: advancedBrainData.version
+          }))
+        } else {
+          return handleCORS(NextResponse.json({
+            port: port,
+            status: response.ok ? "active" : "inactive",
+            response_time: "< 3s"
+          }))
+        }
       } catch (error) {
         return handleCORS(NextResponse.json({
           port: port, 
@@ -989,6 +1003,181 @@ except Exception as e:
           success: false,
           error: error.message
         }, { status: 500 }))
+      }
+    }
+
+    if (route === '/brain-query' && method === 'POST') {
+      const body = await request.json()
+      console.log('🔍 استعلام للمخ المتطور:', body)
+      
+      try {
+        // إرسال للمخ المتطور
+        const response = await fetch('http://localhost:8006/v1/query', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer surooh-enterprise-token-abu-sham'
+          },
+          body: JSON.stringify({
+            user_id: 'abu_sham',
+            query_text: body.query,
+            top_k: body.top_k || 3,
+            mode: body.mode || 'hybrid'
+          })
+        })
+        
+        if (response.ok) {
+          const result = await response.json()
+          return handleCORS(NextResponse.json({
+            success: true,
+            answer: result.answer_text,
+            sources: result.sources,
+            confidence: result.confidence_score,
+            processing_time: result.processing_time_ms,
+            trace_id: result.trace_id
+          }))
+        } else {
+          throw new Error(`المخ المتطور رفض: ${response.status}`)
+        }
+        
+      } catch (error) {
+        console.error('❌ خطأ في استعلام المخ:', error)
+        return handleCORS(NextResponse.json({
+          success: false,
+          error: error.message
+        }, { status: 500 }))
+      }
+    }
+
+    if (route === '/brain-execute' && method === 'POST') {
+      const body = await request.json()
+      console.log('⚡ تنفيذ مهمة في المخ المتطور:', body)
+      
+      try {
+        // إرسال للمخ المتطور
+        const response = await fetch('http://localhost:8006/v1/execute', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer surooh-enterprise-token-abu-sham'
+          },
+          body: JSON.stringify({
+            agent_name: body.agent_name || 'fullstack_pro',
+            task_payload: body.task_payload,
+            priority: body.priority || 'normal',
+            user_id: 'abu_sham'
+          })
+        })
+        
+        if (response.ok) {
+          const result = await response.json()
+          return handleCORS(NextResponse.json({
+            success: true,
+            task_id: result.task_id,
+            agent_name: result.agent_name,
+            status: result.status,
+            trace_id: result.trace_id
+          }))
+        } else {
+          throw new Error(`المخ المتطور رفض: ${response.status}`)
+        }
+        
+      } catch (error) {
+        console.error('❌ خطأ في تنفيذ المهمة:', error)
+        return handleCORS(NextResponse.json({
+          success: false,
+          error: error.message
+        }, { status: 500 }))
+      }
+    }
+
+    if (route === '/brain-advanced-stats' && method === 'GET') {
+      try {
+        // جلب إحصائيات مفصلة من المخ المتطور
+        const response = await fetch('http://localhost:8006/v1/metrics', {
+          headers: { 
+            'Authorization': 'Bearer surooh-enterprise-token-abu-sham'
+          }
+        })
+        
+        if (response.ok) {
+          const result = await response.json()
+          return handleCORS(NextResponse.json({
+            success: true,
+            brain_stats: result,
+            fetched_at: new Date().toISOString()
+          }))
+        } else {
+          throw new Error(`المخ المتطور غير متاح: ${response.status}`)
+        }
+        
+      } catch (error) {
+        return handleCORS(NextResponse.json({
+          success: false,
+          error: error.message
+        }, { status: 500 }))
+      }
+    }
+
+    if (route === '/smart-brain-stats' && method === 'GET') {
+      try {
+        // قراءة إحصائيات المخ الذكي من الملف
+        const fs = require('fs')
+        const logPath = '/app/smart_brain/brain_monitor.log'
+        
+        const logContent = fs.readFileSync(logPath, 'utf8')
+        const lines = logContent.split('\n')
+        
+        // تحليل الإحصائيات
+        const apiAnalyses = lines.filter(line => line.includes('✅ تم تحليل وحفظ') && line.includes('API')).length
+        const requestsProcessed = lines.filter(line => line.includes('✅ تم تحليل وحفظ الطلب')).length
+        const knowledgeUpdates = lines.filter(line => line.includes('🧠 تم تطوير المعرفة')).length
+        
+        // آخر 10 أنشطة
+        const recentActivities = lines
+          .filter(line => line.includes('✅') || line.includes('📡') || line.includes('📋'))
+          .slice(-10)
+          .reverse()
+        
+        return handleCORS(NextResponse.json({
+          success: true,
+          smart_brain_active: true,
+          stats: {
+            apis_analyzed: apiAnalyses,
+            requests_processed: requestsProcessed,
+            knowledge_updates: knowledgeUpdates,
+            total_activities: lines.length - 1
+          },
+          recent_activities: recentActivities,
+          last_update: new Date().toISOString()
+        }))
+        
+      } catch (error) {
+        return handleCORS(NextResponse.json({
+          success: false,
+          error: error.message,
+          smart_brain_active: false
+        }))
+      }
+    }
+
+    if (route === '/brain-status' && method === 'GET') {
+      try {
+        const response = await fetch('http://localhost:8006/')
+        if (response.ok) {
+          const data = await response.json()
+          return handleCORS(NextResponse.json({
+            connected: true,
+            brain_data: data,
+            documents: data.statistics?.total_documents || 0,
+            sessions: data.statistics?.total_sessions || 0,
+            uptime: data.uptime_human
+          }))
+        } else {
+          return handleCORS(NextResponse.json({ connected: false, error: 'Brain not responding' }))
+        }
+      } catch (error) {
+        return handleCORS(NextResponse.json({ connected: false, error: error.message }))
       }
     }
 
