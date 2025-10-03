@@ -1,251 +1,316 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
 
-export default function RealTestPage() {
-  const [gmailData, setGmailData] = useState(null)
-  const [githubData, setGithubData] = useState(null)
-  const [loading, setLoading] = useState({ gmail: false, github: false })
+export default function CleanDashboard() {
+  const [brainStatus, setBrainStatus] = useState('connecting')
+  const [apis, setApis] = useState([])
+  const [activities, setActivities] = useState([])
+
+  useEffect(() => {
+    checkSystem()
+    const interval = setInterval(checkSystem, 5000)
+    return () => clearInterval(interval)
+  }, [])
+
+  const checkSystem = async () => {
+    try {
+      const [brainRes, apisRes, smartBrainRes] = await Promise.all([
+        fetch('/api/brain-status'),
+        fetch('/api/brain-apis'),
+        fetch('/api/smart-brain-stats')
+      ])
+
+      setBrainStatus(brainRes.ok ? 'connected' : 'error')
+      
+      if (apisRes.ok) {
+        const data = await apisRes.json()
+        setApis(data.stored_apis || [])
+      }
+      
+      // عرض نشاط المخ الذكي
+      if (smartBrainRes.ok) {
+        const smartData = await smartBrainRes.json()
+        if (smartData.success && smartData.smart_brain_active) {
+          addActivity(`🧠 المخ الذكي: حلل ${smartData.stats.apis_analyzed} APIs و ${smartData.stats.requests_processed} طلب`)
+        }
+      }
+    } catch (error) {
+      setBrainStatus('error')
+    }
+  }
+
+  const addActivity = (msg) => {
+    setActivities(prev => [{
+      id: Date.now(),
+      msg,
+      time: new Date().toLocaleTimeString('ar-SA')
+    }, ...prev.slice(0, 99)])
+  }
+
+  const connectAPI = async () => {
+    const type = document.getElementById('api-type').value
+    const endpoint = document.getElementById('api-endpoint').value  
+    const key = document.getElementById('api-key').value
+
+    if (!type || !endpoint || !key) {
+      alert('املأ كل الحقول')
+      return
+    }
+
+    try {
+      addActivity(`جاري ربط ${type} API...`)
+      
+      const response = await fetch('/api/store-api', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ apiType: type, endpoint, apiKey: key, userId: 'abu_sham' })
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        addActivity(`✅ تم ربط ${type} API مع المخ`)
+        await checkSystem()
+        alert(`✅ ${result.message}`)
+        document.getElementById('api-endpoint').value = ''
+        document.getElementById('api-key').value = ''
+      } else {
+        addActivity(`❌ فشل ربط ${type}: ${result.message}`)
+        alert(`❌ ${result.message}`)
+      }
+    } catch (error) {
+      addActivity(`❌ خطأ ربط API: ${error.message}`)
+      alert(`❌ ${error.message}`)
+    }
+  }
+
+  const deleteAPI = async (apiId, apiType) => {
+    if (!confirm(`حذف ${apiType} API؟`)) return
+
+    try {
+      addActivity(`جاري حذف ${apiType} API...`)
+      
+      const response = await fetch('/api/delete-api', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ apiId, apiType })
+      })
+
+      if (response.ok) {
+        addActivity(`✅ تم حذف ${apiType} API من المخ`)
+        await checkSystem()
+        alert(`✅ تم الحذف`)
+      } else {
+        const error = await response.json()
+        addActivity(`❌ فشل حذف ${apiType}: ${error.message}`)
+        alert(`❌ فشل الحذف`)
+      }
+    } catch (error) {
+      addActivity(`❌ خطأ حذف: ${error.message}`)
+      alert(`❌ خطأ`)
+    }
+  }
 
   const testGmail = async () => {
-    setLoading(prev => ({ ...prev, gmail: true }))
     try {
-      console.log("📧 اختبار Gmail الحقيقي...")
+      addActivity('جاري قراءة Gmail...')
       
       const response = await fetch('/api/gmail-check', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'read' })
       })
-      
+
       const result = await response.json()
-      console.log("Gmail Result:", result)
-      
+
       if (result.success) {
-        const output = result.output
-        const totalMatch = output.match(/إجمالي الإيميلات: (\d+)/)
-        const totalEmails = totalMatch ? parseInt(totalMatch[1]) : 0
-        
-        setGmailData({
-          success: true,
-          output: output,
-          totalEmails: totalEmails,
-          address: result.gmail_address,
-          lastCheck: new Date().toLocaleString('ar-SA')
-        })
-        
-        alert(`✅ Gmail يعمل!\n\nالحساب: ${result.gmail_address}\nإجمالي: ${totalEmails} إيميل`)
+        const totalEmails = result.output.match(/إجمالي الإيميلات: (\d+)/)?.[1] || '0'
+        addActivity(`✅ Gmail: ${totalEmails} إيميل من ${result.gmail_address}`)
+        alert(`✅ Gmail يعمل!\nالحساب: ${result.gmail_address}\nالإيميلات: ${totalEmails}`)
       } else {
-        setGmailData({
-          success: false,
-          error: result.error,
-          lastCheck: new Date().toLocaleString('ar-SA')
-        })
-        alert(`❌ فشل Gmail: ${result.error}`)
+        addActivity(`❌ فشل Gmail: ${result.error}`)
+        alert(`❌ ${result.error}`)
       }
     } catch (error) {
-      setGmailData({
-        success: false,
-        error: error.message,
-        lastCheck: new Date().toLocaleString('ar-SA')
-      })
-      alert(`❌ خطأ: ${error.message}`)
-    } finally {
-      setLoading(prev => ({ ...prev, gmail: false }))
+      addActivity(`❌ خطأ Gmail: ${error.message}`)
+      alert(`❌ ${error.message}`)
     }
   }
 
-  const testGithub = async () => {
-    setLoading(prev => ({ ...prev, github: true }))
+  const deployGithub = async () => {
     try {
-      console.log("🚀 اختبار GitHub الحقيقي...")
+      addActivity('جاري رفع المشروع على GitHub...')
       
       const response = await fetch('/api/github-deploy', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ timestamp: new Date().toISOString() })
+        body: JSON.stringify({ timestamp: Date.now() })
       })
-      
+
       const result = await response.json()
-      console.log("GitHub Result:", result)
-      
+
       if (result.success) {
-        setGithubData({
-          success: true,
-          url: result.github_url,
-          repo: result.repo,
-          sha: result.commit_sha,
-          message: result.message,
-          timestamp: new Date().toLocaleString('ar-SA')
-        })
-        
-        alert(`✅ GitHub يعمل!\n\nالمستودع: ${result.repo}\nالرابط: ${result.github_url}`)
+        addActivity(`✅ GitHub: رُفع ${result.files_uploaded || 1} ملف`)
+        alert(`✅ GitHub يعمل!\nالرابط: ${result.github_url || result.project_url}`)
       } else {
-        setGithubData({
-          success: false,
-          error: result.error,
-          timestamp: new Date().toLocaleString('ar-SA')
-        })
-        alert(`❌ فشل GitHub: ${result.error}`)
+        addActivity(`❌ فشل GitHub: ${result.error}`)
+        alert(`❌ ${result.error}`)
       }
     } catch (error) {
-      setGithubData({
-        success: false,
-        error: error.message,
-        timestamp: new Date().toLocaleString('ar-SA')
-      })
-      alert(`❌ خطأ: ${error.message}`)
-    } finally {
-      setLoading(prev => ({ ...prev, github: false }))
+      addActivity(`❌ خطأ GitHub: ${error.message}`)
+      alert(`❌ ${error.message}`)
     }
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8" dir="rtl">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-gray-50 p-8">
+      <div className="max-w-7xl mx-auto" dir="rtl">
         
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-3">
-            🧠 سُروح - اختبار الخدمات الحقيقية
-          </h1>
-          <p className="text-lg text-gray-600">
-            اختبار Gmail و GitHub مع credentials أبو شام الحقيقية
-          </p>
-          <div className="bg-yellow-100 border border-yellow-400 rounded-lg p-4 mt-4">
-            <p className="font-bold text-yellow-800">
-              🎯 هذا اختبار حقيقي - ليس demo!
-            </p>
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-4xl font-bold text-gray-900">🧠 نواة سُروح</h1>
+            <p className="text-lg text-gray-600">Dashboard نظيف مربوط مع المخ</p>
           </div>
+          <Button 
+            onClick={() => window.open('/brain', '_blank')}
+            className="bg-purple-600 hover:bg-purple-700"
+          >
+            🧠 فتح المخ
+          </Button>
         </div>
 
-        <div className="grid grid-cols-2 gap-8">
-          
-          {/* Gmail Test */}
-          <Card className="shadow-2xl">
-            <CardHeader className="bg-red-600 text-white">
-              <CardTitle className="text-2xl">
-                📧 Gmail Reader Test
-              </CardTitle>
+        <div className="grid grid-cols-4 gap-6 mb-8">
+          <Card className="shadow-lg">
+            <CardHeader>
+              <CardTitle>🧠 المخ</CardTitle>
             </CardHeader>
-            <CardContent className="p-6">
-              <div className="mb-4">
-                <div className="text-sm text-gray-600 mb-2">الحساب المستخدم:</div>
-                <div className="font-mono bg-gray-100 p-2 rounded">samborvat@gmail.com</div>
+            <CardContent className="text-center">
+              <div className="text-2xl mb-2">
+                {brainStatus === 'connected' ? '🟢' : '🔴'}
               </div>
-              
-              <Button 
-                onClick={testGmail}
-                disabled={loading.gmail}
-                className="w-full bg-red-600 hover:bg-red-700 h-14 text-lg mb-4"
-              >
-                {loading.gmail ? "🔄 جاري القراءة..." : "📧 قراءة الإيميلات الآن"}
-              </Button>
-              
-              {gmailData && (
-                <div className={`p-4 rounded-lg ${
-                  gmailData.success ? 'bg-green-100 border border-green-300' : 'bg-red-100 border border-red-300'
-                }`}>
-                  <div className="font-bold mb-2">
-                    {gmailData.success ? '✅ النتيجة:' : '❌ خطأ:'}
-                  </div>
-                  
-                  {gmailData.success ? (
-                    <div className="text-sm space-y-2">
-                      <div>📊 إجمالي الإيميلات: <span className="font-bold text-lg">{gmailData.totalEmails?.toLocaleString()}</span></div>
-                      <div>📧 الحساب: {gmailData.address}</div>
-                      <div>⏰ وقت الفحص: {gmailData.lastCheck}</div>
-                      
-                      <details className="mt-3">
-                        <summary className="cursor-pointer font-bold">📋 عرض كل تفاصيل الإيميلات</summary>
-                        <div className="bg-gray-900 text-green-400 p-3 rounded mt-2 font-mono text-xs">
-                          <pre>{gmailData.output}</pre>
-                        </div>
-                      </details>
-                    </div>
-                  ) : (
-                    <div className="text-sm text-red-700">
-                      {gmailData.error}
-                    </div>
-                  )}
-                </div>
-              )}
+              <div className="text-sm">
+                {brainStatus === 'connected' ? 'متصل' : 'خطأ'}
+              </div>
             </CardContent>
           </Card>
 
-          {/* GitHub Test */}
-          <Card className="shadow-2xl">
-            <CardHeader className="bg-purple-600 text-white">
-              <CardTitle className="text-2xl">
-                🐙 GitHub Deploy Test
-              </CardTitle>
+          <Card className="shadow-lg">
+            <CardHeader>
+              <CardTitle>🔗 APIs</CardTitle>
             </CardHeader>
-            <CardContent className="p-6">
-              <div className="mb-4">
-                <div className="text-sm text-gray-600 mb-2">المستودع المستخدم:</div>
-                <div className="font-mono bg-gray-100 p-2 rounded">sorooh/smartcore</div>
-              </div>
-              
-              <Button 
-                onClick={testGithub}
-                disabled={loading.github}
-                className="w-full bg-purple-600 hover:bg-purple-700 h-14 text-lg mb-4"
-              >
-                {loading.github ? "🔄 جاري الرفع..." : "🚀 رفع ملف على GitHub الآن"}
+            <CardContent className="text-center">
+              <div className="text-2xl mb-2">{apis.length}</div>
+              <div className="text-sm">محفوظة</div>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-lg">
+            <CardHeader>
+              <CardTitle>📧 Gmail</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Button onClick={testGmail} className="w-full bg-red-600 hover:bg-red-700">
+                قراءة
               </Button>
-              
-              {githubData && (
-                <div className={`p-4 rounded-lg ${
-                  githubData.success ? 'bg-green-100 border border-green-300' : 'bg-red-100 border border-red-300'
-                }`}>
-                  <div className="font-bold mb-2">
-                    {githubData.success ? '✅ النتيجة:' : '❌ خطأ:'}
-                  </div>
-                  
-                  {githubData.success ? (
-                    <div className="text-sm space-y-2">
-                      <div>📂 المستودع: <span className="font-bold">{githubData.repo}</span></div>
-                      <div>🚀 وقت الرفع: {githubData.timestamp}</div>
-                      <div>🆔 Commit SHA: <span className="font-mono text-xs">{githubData.sha}</span></div>
-                      <div>
-                        🔗 الرابط: 
-                        <a href={githubData.url} target="_blank" className="text-blue-600 underline ml-1 font-bold">
-                          عرض الملف على GitHub
-                        </a>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-sm text-red-700">
-                      {githubData.error}
-                    </div>
-                  )}
-                </div>
-              )}
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-lg">
+            <CardHeader>
+              <CardTitle>🐙 GitHub</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Button onClick={deployGithub} className="w-full bg-purple-600 hover:bg-purple-700">
+                رفع
+              </Button>
             </CardContent>
           </Card>
         </div>
 
-        <div className="mt-8 bg-gradient-to-r from-blue-100 to-purple-100 p-6 rounded-xl text-center">
-          <h2 className="text-2xl font-bold text-gray-800 mb-3">
-            🎯 أبو شام، هذا دليل على الصدق!
-          </h2>
-          <p className="text-lg text-gray-700 mb-4">
-            الأزرار فوق تستخدم credentials الحقيقية وتتصل بالخدمات الفعلية
-          </p>
-          <div className="grid grid-cols-2 gap-4 max-w-2xl mx-auto">
-            <div className="bg-white p-3 rounded-lg shadow">
-              <div className="font-bold">📧 Gmail:</div>
-              <div className="text-sm">samborvat@gmail.com</div>
-              <div className="text-xs text-gray-500">App Password: nrrc dcbv wcuu cpve</div>
-            </div>
-            <div className="bg-white p-3 rounded-lg shadow">
-              <div className="font-bold">🐙 GitHub:</div>
-              <div className="text-sm">sorooh/smartcore</div>
-              <div className="text-xs text-gray-500">Token: ghp_LTkSSD88ec...</div>
-            </div>
-          </div>
+        <div className="grid grid-cols-2 gap-8 mb-8">
+          <Card className="shadow-lg">
+            <CardHeader>
+              <CardTitle>➕ ربط API جديد</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <select id="api-type" className="w-full p-3 border rounded">
+                <option value="">اختر النوع</option>
+                <option value="github">🐙 GitHub</option>
+                <option value="gmail">📧 Gmail</option>
+                <option value="bol">🛒 BOL</option>
+              </select>
+              
+              <Input id="api-endpoint" placeholder="API Endpoint" />
+              <Input id="api-key" placeholder="API Key" type="password" />
+              
+              <Button onClick={connectAPI} className="w-full bg-green-600 hover:bg-green-700">
+                🔗 ربط مع المخ
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-lg">
+            <CardHeader>
+              <CardTitle>📋 سجل العمليات (دائم)</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="bg-black text-green-400 p-4 rounded font-mono text-sm h-64 overflow-y-auto">
+                {activities.map(activity => (
+                  <div key={activity.id} className="mb-1">
+                    [{activity.time}] {activity.msg}
+                  </div>
+                ))}
+                {activities.length === 0 && (
+                  <div className="text-gray-500 text-center py-16">
+                    لا توجد أنشطة
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </div>
+
+        <Card className="shadow-lg">
+          <CardHeader>
+            <CardTitle>🗂️ APIs المحفوظة ({apis.length})</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {apis.map(api => (
+                <div key={api.id} className="flex justify-between items-center p-4 border rounded bg-green-50">
+                  <div>
+                    <div className="font-bold">
+                      {api.api_type === 'gmail' ? '📧' :
+                       api.api_type === 'github' ? '🐙' :
+                       api.api_type === 'bol' ? '🛒' : '🧠'} {api.api_type} API
+                    </div>
+                    <div className="text-sm text-gray-600">{api.endpoint}</div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Badge className="bg-green-100 text-green-800">🟢 متصل</Badge>
+                    <Button 
+                      size="sm" 
+                      variant="destructive"
+                      onClick={() => deleteAPI(api.id, api.api_type)}
+                    >
+                      🗑️
+                    </Button>
+                  </div>
+                </div>
+              ))}
+              {apis.length === 0 && (
+                <div className="text-center py-8 text-gray-500">
+                  لا توجد APIs
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   )
